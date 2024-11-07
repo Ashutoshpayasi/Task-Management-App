@@ -2,34 +2,25 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const swaggerDocument = YAML.load('./swagger.yaml');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+require('dotenv').config()
+const connectDb = require('./config/dbConnect');
+connectDb();
 
 const app = express();
-app.use(express.json()); // Parse JSON bodies
 
-// Mock data for testing
-const tasks = [
-    { id: 1, title: 'Sample Task', description: 'This is a sample task description' },
-    { id: 2, title: 'Another Task', description: 'This is another task description' },
-    { id: 2, title: 'Another Task', description: 'This is another task description' },
-    { id: 2, title: 'Another Task', description: 'This is another task description' },
-    { id: 2, title: 'Another Task', description: 'This is another task description' },
-];
+//middleware
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 // Mount Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// GET request to retrieve tasks
-app.get('/api/tasks', (req, res) => {
-    res.status(200).json(tasks);
-});
 
-// POST request to create a new task
-app.post('/api/tasks', (req, res) => {
-    const { title, description } = req.body;
-    const newTask = { id: tasks.length + 1, title, description };
-    tasks.push(newTask);
-    res.status(201).json(newTask);
-});
 
 // Start the server
 const PORT = process.env.PORT || 3000;
