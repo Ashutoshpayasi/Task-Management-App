@@ -4,6 +4,9 @@ const YAML = require('yamljs');
 const swaggerDocument = YAML.load('./swagger.yaml');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const session = require('express-session');
+const passport = require('passport');
+
 require('dotenv').config()
 const connectDb = require('./config/dbConnect');
 connectDb();
@@ -16,9 +19,20 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
+app.use(session({
+    secret:process.env.JWT_SECRET,
+    resave:false,
+    saveUninitialized:false
+ }))
+ app.use(passport.initialize());
+app.use(passport.session());
 // Mount Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+const userRoutes = require("./routes/userRoutes");
+
+//routes
+app.use("/api", userRoutes);
 
 
 
