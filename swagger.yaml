@@ -1,36 +1,30 @@
 openapi: 3.0.0
 info:
-  title: Task API
-  description: API documentation for managing tasks
+  title: User Management API
   version: 1.0.0
+  description: API documentation for user registration, login, OTP verification, and CRUD operations
 
 paths:
-  /api/tasks:
-    get:
-      summary: Retrieve a list of tasks
-      description: Returns a list of all tasks
-      responses:
-        '200':
-          description: A list of tasks
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      example: 1
-                    title:
-                      type: string
-                      example: Sample Task
-                    description:
-                      type: string
-                      example: This is a sample task description
+  /user/register:
     post:
-      summary: Create a new task
-      description: Adds a new task to the list
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Bad request - Invalid input data
+        '409':
+          description: Conflict - Email already exists
+
+  /user/verifyotp:
+    post:
+      summary: Verify OTP for email verification
       requestBody:
         required: true
         content:
@@ -38,12 +32,261 @@ paths:
             schema:
               type: object
               properties:
-                title:
+                email:
                   type: string
-                  example: New Task
-                description:
+                  example: user@example.com
+                otp:
                   type: string
-                  example: This is a new task
+                  example: "123456"
       responses:
-        '201':
-          description: Task created successfully
+        '200':
+          description: OTP verified successfully
+        '400':
+          description: Invalid OTP or OTP expired
+
+  /user/resendotp:
+    post:
+      summary: Resend OTP for email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+      responses:
+        '200':
+          description: OTP resent successfully
+        '400':
+          description: Bad request - Invalid email
+
+  /user/login:
+    post:
+      summary: Log in a user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: User logged in successfully
+        '401':
+          description: Unauthorized - Invalid email or password
+
+  /user/getalluser:
+    get:
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /user/{id}:
+    get:
+      summary: Get a user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+    put:
+      summary: Update a user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+        '404':
+          description: User not found
+
+    delete:
+      summary: Delete a user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+
+  /user/resetpassword:
+    post:
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+      responses:
+        '200':
+          description: Password reset email sent
+        '400':
+          description: Invalid email address
+
+  /user/reset-password/{token}:
+    post:
+      summary: Reset user password using token
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  example: NewPassword123
+      responses:
+        '200':
+          description: Password reset successfully
+        '400':
+          description: Invalid or expired token
+
+  /verify-email/{token}:
+    get:
+      summary: Verify email using token
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verified successfully
+        '400':
+          description: Invalid or expired token
+
+components:
+  schemas:
+    UserInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: johndoe@example.com
+        password:
+          type: string
+          example: Password123
+        role:
+          type: string
+          example: user
+          enum: [user, admin, manager]
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          example: johndoe@example.com
+        password:
+          type: string
+          example: Password123
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 60d0fe4f5311236168a109ca
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: johndoe@example.com
+        role:
+          type: string
+          example: user
+          enum: [user, admin, manager]
+        isVerified:
+          type: boolean
+          example: true
+
+    UserUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: johndoe@example.com
+        role:
+          type: string
+          example: manager
+          enum: [user, admin, manager]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -32,7 +32,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 const userRoutes = require("./routes/userRoutes");
 
 //routes
-app.use("/api", userRoutes);
+app.use(userRoutes);
 
 
 

@@ -8,7 +8,6 @@ const sendEmail = require("../config/sendEmailconfig");
 const crypto = require("crypto");
 const mailOptions = require("../config/EmailTemplate");
 const generateOTP = require("../utils/generateOtp");
-const mongoose = require("mongoose");
 
 const CreateUser = asyncHandler(async (req, res) => {
   try {
@@ -87,22 +86,77 @@ const CreateUser = asyncHandler(async (req, res) => {
 });
 
 const verifyOTP = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
+  try {
+    const { email, otp } = req.body;
 
-  const user = await User.findOne({ email });
+    // Input validation
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide both email and OTP"
+      });
+    }
 
-  if (user.otp !== otp) {
-    return res.status(400).json({ message: "Invalid OTP" });
+    // Find user by email
+    const user = await User.findOne({ email });
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Check if OTP exists
+    if (!user.otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP not found. Please request a new OTP"
+      });
+    }
+
+    // Check if OTP has expired
+    if (user.otpExpires && user.otpExpires < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new one"
+      });
+    }
+
+    // Verify OTP
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP"
+      });
+    }
+
+    // Update user verification status
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        isVerified: true
+      }
+    });
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Error verifying OTP",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-
-  user.isVerified = true;
-  user.otp = undefined;
-  user.otpExpires = undefined;
-  await user.save();
-
-  res.status(200).json({ message: "Email verified successfully" });
 });
-
 // Add this function to handle resending OTP
 
 const resendOTP = asyncHandler(async (req, res) => {
