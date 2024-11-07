@@ -1,0 +1,49 @@
+openapi: 3.0.0
+info:
+  title: Task API
+  description: API documentation for managing tasks
+  version: 1.0.0
+
+paths:
+  /api/tasks:
+    get:
+      summary: Retrieve a list of tasks
+      description: Returns a list of all tasks
+      responses:
+        '200':
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    title:
+                      type: string
+                      example: Sample Task
+                    description:
+                      type: string
+                      example: This is a sample task description
+    post:
+      summary: Create a new task
+      description: Adds a new task to the list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: New Task
+                description:
+                  type: string
+                  example: This is a new task
+      responses:
+        '201':
+          description: Task created successfully
