@@ -1,5 +1,6 @@
 
-  
+  const asyncHandler = require('express-async-handler');
+  const Task = require('../models/TaskModel');
   // Task CRUD Operations
   const createTask = asyncHandler(async (req, res) => {
     try {
@@ -84,25 +85,4 @@
     }
   });
   
-  // RBAC Middleware
-  const hasPermission = (requiredPermissions) => {
-    return asyncHandler(async (req, res, next) => {
-      try {
-        const user = req.user;
-        if (user.role.permissions.some(perm => requiredPermissions.includes(perm))) {
-          next();
-        } else {
-          return res.status(403).json({ success: false, message: 'Forbidden' });
-        }
-      } catch (error) {
-        console.error('Error in hasPermission middleware:', error);
-        return res.status(500).json({ success: false, message: 'Internal server error' });
-      }
-    });
-  };
-  
-  // Task Endpoint Routes with RBAC
-  router.post('/tasks', hasPermission(['tasks:create']), createTask);
-  router.get('/tasks', hasPermission(['tasks:read']), getTasks);
-  router.patch('/tasks/:id', hasPermission(['tasks:update']), updateTask);
-  router.delete('/tasks/:id', hasPermission(['tasks:delete']), deleteTask);
+  module.exports = { createTask, getTasks, updateTask, deleteTask };

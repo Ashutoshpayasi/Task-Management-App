@@ -30,9 +30,11 @@ app.use(passport.session());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 const userRoutes = require("./routes/userRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 
 //routes
 app.use(userRoutes);
+app.use(taskRoutes);
 
 
 
